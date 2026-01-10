@@ -1,0 +1,162 @@
+menu "Timer lamp"
+    menu "Wifi"
+        choice WIFI_SECURITY
+            prompt "Wifi security protocol"
+
+            config WIFI_SECURITY_WPA2
+                bool "WPA2"
+
+            config WIFI_SECURITY_WPA3
+                bool "WPA3"
+
+        endchoice
+
+        config WIFI_SSID
+            string "WiFi SSID"
+            default ""
+            help
+                WiFi network name
+
+        config WIFI_PASSWORD
+            string "WiFi Password"
+            default ""
+            help
+                WiFi network password
+
+        config WIFI_HOSTNAME
+            string "Hostname"
+            default "timerlamp"
+            help
+                Set device hostname that will appear in router's DHCP list
+
+    endmenu
+
+    menu "Relay"
+        config GPIO_PIN_RELAY
+            int "Relay control pin"
+            default 0
+            help
+                Set relay control pin
+
+        config RELAY_START_TIME
+            string "Power on schedule"
+            default "07:00:00"
+            help
+                Relay activation schedule in HH:MM:SS format
+
+        config RELAY_STOP_TIME
+            string "Power off schedule"
+            default "21:00:00"
+            help
+                Relay deactivation schedule in HH:MM:SS format
+
+    endmenu
+
+    menu "SNTP"
+        config SNTP_SERVER
+            string "SNTP server"
+            default "pool.ntp.org"
+            help
+                Ntp server provider
+
+        config SNTP_TIMEOUT
+            int "SNTP timeout (seconds)"
+            default 10
+            help
+                Maximum SNTP response time
+
+        config SNTP_TIMEZONE
+            string "Timezone"
+            default "UTC-3"
+            help
+                Local timezone
+
+    endmenu
+
+    menu "Air temperature/humidity sensor"
+        config SENSOR_PIN_SDA
+            int "SDA pin"
+            default 8
+
+        config SENSOR_PIN_SCL
+            int "SCL pin"
+            default 9
+
+        config SENSOR_I2C_FREQ_KHZ
+            int "Clock frequency (kHz)"
+            default 400
+
+        config SENSOR_I2C_DEVICE_ADDRESS
+            int "Device address"
+            default 56
+
+        config SENSOR_MEASUREMENT_INTERVAL
+            int "Measurement interval"
+            default 10
+            help
+                Temperature measurement interval (in seconds)
+
+        config SENSOR_SAMPLE_COUNT
+            int "Samples per measurement"
+            default 10
+            help
+                Number of averaged samples per single measurement
+
+    endmenu
+
+    menu "Soil moisture sensor"
+        config SOIL_MOISTURE_SENSOR_ADC_UNIT
+            int "Adc unit (1/2)"
+            default 1
+
+        config SOIL_MOISTURE_SENSOR_ADC_CHANNEL
+            int "Adc channel (0-9)"
+            default 0
+
+        config SOIL_MOISTURE_SENSOR_SAMPLE_COUNT
+            int "Samples per measurement"
+            default 10
+            help
+                Number of averaged samples per single measurement
+
+    endmenu
+
+    menu "Display"
+        config DISPLAY_PIN_MOSI
+            int "Display SPI MOSI pin"
+            default 6
+
+        config DISPLAY_PIN_SCK
+            int "Display SPI clock pin"
+            default 4
+
+        config DISPLAY_PIN_DC
+            int "Display SPI data command pin"
+            default 1
+
+        config DISPLAY_PIN_RESET
+            int "Display reset pin"
+            default 3
+
+        config DISPLAY_SPI_FREQ_MHZ
+            int "Display SPI clock frequency (MHz)"
+            default 20
+
+    endmenu
+
+    menu "Web server"
+        config WEBSERVER_PORT
+            int "Webserver port"
+            default 80
+            help
+                Go fuck yourself
+
+    endmenu
+
+	config GPIO_PIN_LED
+	    int "Indicator led pin"
+	    default 8
+	    help
+	        Set build in led pin
+
+endmenu
