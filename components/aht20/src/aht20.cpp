@@ -1,11 +1,13 @@
 #include <aht20.hpp>
 
-#include <utility>
-
 #include <esp_log.h>
+#include <esp_err.h>
+#include <esp_check.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
+
+#include <utility>
 
 //=======================================================
 
@@ -14,7 +16,7 @@ static const char* TAG = "sht20";
 
 //=======================================================
 
-void AHT20::init(
+esp_err_t AHT20::init(
 	i2c_master_bus_handle_t i2c_bus_handle,
 	int i2c_freq,
 	uint8_t device_address
@@ -25,7 +27,15 @@ void AHT20::init(
 	config.device_address = device_address;
 	config.scl_speed_hz = i2c_freq;
 	
-	ESP_ERROR_CHECK(i2c_master_bus_add_device(i2c_bus_handle, &config, &m_device_handle));
+	ESP_RETURN_ON_ERROR(
+		i2c_master_bus_add_device(
+			i2c_bus_handle,
+			&config,
+			&m_device_handle
+		),
+		TAG,
+		"unable to add device"
+	);
 	
 	// Waiting 40ms as required by the specification
 	vTaskDelay(pdMS_TO_TICKS(40));
@@ -33,7 +43,7 @@ void AHT20::init(
 	// Reading status
 	uint8_t command = std::to_underlying(Command::Status);
 	uint8_t status = 0;
-	ESP_ERROR_CHECK(
+	ESP_RETURN_ON_ERROR(
 		i2c_master_transmit_receive(
 			m_device_handle,
 			&command,
@@ -41,10 +51,10 @@ void AHT20::init(
 			&status,
 			sizeof(status),
 			TIMEOUT
-		)
+		),
+		TAG,
+		"status reading failure"
 	);
-	
-	ESP_LOGI(TAG, "status: 0x%02X", status);
 	
 	if (!(status & BIT3))
 	{
@@ -68,6 +78,8 @@ void AHT20::init(
 		
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
+	
+	return ESP_OK;
 }
 
 AHT20::~AHT20()

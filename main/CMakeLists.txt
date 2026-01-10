@@ -1,6 +1,10 @@
 idf_component_register(
 	SRCS
 		"src/main.cpp"
+		"src/sensor_manager.cpp"
+		"src/peripheral_manager.cpp"
+		"src/ui_manager.cpp"
+		"src/utils.cpp"
 		"src/render.cpp"
 		"src/font.cpp"
 		"src/icon.cpp"
@@ -15,7 +19,6 @@ idf_component_register(
 		esp_driver_i2c
 		esp_http_server
 		esp_adc
-		esp-tls
 		app_update
 		nvs_flash
 		cjson

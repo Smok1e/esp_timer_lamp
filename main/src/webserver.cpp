@@ -2,7 +2,6 @@
 #include <webserver.hpp>
 
 #include <cJSON.h>
-#include <esp_tls_crypto.h>
 
 //========================================
 
@@ -33,11 +32,10 @@ void Webserver::init(Main* main)
 	ESP_ERROR_CHECK(httpd_start(&m_httpd_handle, &config));
 	ESP_LOGI(TAG, "webserver started on port %d", CONFIG_WEBSERVER_PORT);
 	
-	registerEndpoint<&Webserver::indexHandler, HTTP_GET >("/");
+	registerEndpoint<&Webserver::indexHandler, HTTP_GET>("/");
 	
-	registerEndpoint<&Webserver::apiUpdateFirmwareHandler,   HTTP_POST>("/api/update_firmware");
-	registerEndpoint<&Webserver::apiGetMeasurementsHandler,  HTTP_GET> ("/api/get_measurements");
-	registerEndpoint<&Webserver::apiGetScreenContentHandler, HTTP_GET> ("/api/get_screen_content");
+	registerEndpoint<&Webserver::apiUpdateFirmwareHandler,  HTTP_POST>("/api/update_firmware");
+	registerEndpoint<&Webserver::apiGetMeasurementsHandler, HTTP_GET> ("/api/get_measurements");
 }
 
 //========================================
@@ -89,7 +87,7 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 		return;
 	}
 	
-	m_main->m_update_progress = 0;
+	m_main->m_ui_manager.setState(UIManager::State::FirmwareUpdate);
 	ESP_LOGI(TAG, "firmware size: %zu bytes", firmware_size);
 	
 	const esp_partition_t* running_partition = esp_ota_get_running_partition();
@@ -119,7 +117,7 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 	{
 		if ((err = esp_ota_write(ota_handle, buffer, len)) != ESP_OK)
 		{
-			m_main->m_update_progress = -1;
+			m_main->m_ui_manager.setState(UIManager::State::Running);
 			
 			ESP_LOGE(TAG, "esp_ota_write failed: %s", esp_err_to_name(err));
 			esp_ota_abort(ota_handle);
@@ -131,7 +129,7 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 		written += len;
 		uint8_t progress = 100 * written / firmware_size;
 		
-		m_main->m_update_progress = progress;
+		m_main->m_ui_manager.setFirmwareUpdateProgress(progress);
 		if (progress != last_progress)
 		{
 			printf("update progress: %d%%...        \r", static_cast<int>(progress));
@@ -179,25 +177,25 @@ void Webserver::apiGetMeasurementsHandler(httpd_req_t* request)
 	cJSON_AddItemToObject(
 		object,
 		"temperature",
-		cJSON_CreateNumber(m_main->m_measurement.temperature)
+		cJSON_CreateNumber(m_main->m_sensor_manager.getAirTemperature())
 	);
 	
 	cJSON_AddItemToObject(
 		object,
 		"humidity",
-		cJSON_CreateNumber(m_main->m_measurement.humidity)
+		cJSON_CreateNumber(m_main->m_sensor_manager.getAirHumidity())
 	);
 	
 	cJSON_AddItemToObject(
 		object,
 		"soil_moisture",
-		cJSON_CreateNumber(m_main->m_soil_moisture_sensor_voltage)
+		cJSON_CreateNumber(m_main->m_sensor_manager.getSoilMoisture())
 	);
 	
 	cJSON_AddItemToObject(
 		object,
 		"lightning_enabled",
-		cJSON_CreateBool(m_main->m_relay_on)
+		cJSON_CreateBool(m_main->m_peripheral_manager.isLightningActive())
 	);
 	
 	// Update when humidifier added
@@ -214,45 +212,6 @@ void Webserver::apiGetMeasurementsHandler(httpd_req_t* request)
 	);
 	
 	char buffer[1024] = "";
-	if (!cJSON_PrintPreallocated(object, buffer, sizeof(buffer), false))
-	{
-		ESP_LOGE(TAG, "buffer size is not enough to serialize response");
-		httpd_resp_send_500(request);
-		
-		cJSON_Delete(object);
-		return;
-	}
-	
-	httpd_resp_set_type(request, "application/json");
-	httpd_resp_sendstr(request, buffer);
-	cJSON_Delete(object);
-}
-
-void Webserver::apiGetScreenContentHandler(httpd_req_t* request)
-{
-	auto [width, height] = m_main->m_display.getSize();
-	size_t screen_buffer_size = width * height / 8;
-	
-	char buffer[2048] = "";
-	size_t len = 0;
-	
-	{
-		std::lock_guard<std::mutex> lock(m_main->m_render_mutex);
-		
-		esp_crypto_base64_encode(
-			reinterpret_cast<unsigned char*>(buffer),
-			sizeof(buffer),
-			&len,
-			m_main->m_display.getPixelData(),
-			screen_buffer_size
-		);
-	}
-	
-	auto* object = cJSON_CreateObject();
-	cJSON_AddItemToObject(object, "width", cJSON_CreateNumber(width));
-	cJSON_AddItemToObject(object, "height", cJSON_CreateNumber(height));
-	cJSON_AddItemToObject(object, "content", cJSON_CreateString(buffer));
-	
 	if (!cJSON_PrintPreallocated(object, buffer, sizeof(buffer), false))
 	{
 		ESP_LOGE(TAG, "buffer size is not enough to serialize response");

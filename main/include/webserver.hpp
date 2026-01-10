@@ -27,7 +27,7 @@ private:
 	void indexHandler              (httpd_req_t* request);
 	void apiUpdateFirmwareHandler  (httpd_req_t* request);
 	void apiGetMeasurementsHandler (httpd_req_t* request);
-	void apiGetScreenContentHandler(httpd_req_t* request);
+	
 };
 
 //========================================

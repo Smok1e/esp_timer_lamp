@@ -18,7 +18,7 @@ public:
 	AHT20(const AHT20& copy) = delete;
 	~AHT20();
 	
-	void init(
+	esp_err_t init(
 		i2c_master_bus_handle_t i2c_bus_handle,
 		int i2c_freq,
 		uint8_t device_address = 0x38
