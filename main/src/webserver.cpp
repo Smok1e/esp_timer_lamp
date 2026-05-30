@@ -7,17 +7,6 @@
 
 constexpr const char* TAG = "webserver";
 
-extern const uint8_t INDEX_HTML_BEGIN[] asm("_binary_index_html_start");
-extern const uint8_t INDEX_HTML_END  [] asm("_binary_index_html_end"  );
-
-//========================================
-
-Webserver::~Webserver()
-{
-	httpd_stop(m_httpd_handle);
-	ESP_LOGI(TAG, "webserver stopped");
-}
-
 //========================================
 
 void Webserver::init(Main* main)
@@ -32,22 +21,18 @@ void Webserver::init(Main* main)
 	ESP_ERROR_CHECK(httpd_start(&m_httpd_handle, &config));
 	ESP_LOGI(TAG, "webserver started on port %d", CONFIG_WEBSERVER_PORT);
 	
-	registerEndpoint<&Webserver::indexHandler, HTTP_GET>("/");
-	
-	registerEndpoint<&Webserver::apiUpdateFirmwareHandler,  HTTP_POST>("/api/update_firmware");
-	registerEndpoint<&Webserver::apiGetMeasurementsHandler, HTTP_GET> ("/api/get_measurements");
+	registerEndpoint<&Webserver::apiUpdateFirmwareHandler, HTTP_POST>("/api/update_firmware");
+	registerEndpoint<&Webserver::apiGetStatusHandler,      HTTP_GET> ("/api/get_status"     );
+	registerEndpoint<&Webserver::apiSetDisplayOnHandler,   HTTP_GET> ("/api/set_display_on" );
+}
+
+void Webserver::stop()
+{
+	httpd_stop(m_httpd_handle);
+	ESP_LOGI(TAG, "webserver stopped");
 }
 
 //========================================
-
-void Webserver::indexHandler(httpd_req_t* request)
-{
-	httpd_resp_send(
-		request,
-		reinterpret_cast<const char*>(INDEX_HTML_BEGIN),
-		INDEX_HTML_END - INDEX_HTML_BEGIN
-	);
-}
 
 void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 {
@@ -157,6 +142,8 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 		return;
 	}
 	
+	httpd_resp_set_type(request, "text/plain");
+	
 	len = snprintf(
 		buffer,
 		sizeof(buffer),
@@ -170,45 +157,59 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 	m_main->stop();
 }
 
-void Webserver::apiGetMeasurementsHandler(httpd_req_t* request)
+void Webserver::apiGetStatusHandler(httpd_req_t* request)
 {
 	auto* object = cJSON_CreateObject();
 	
-	cJSON_AddItemToObject(
-		object,
-		"temperature",
-		cJSON_CreateNumber(m_main->m_sensor_manager.getAirTemperature())
-	);
+	if (m_main->m_sensor_manager.isAirSensorAvailable())
+	{
+		cJSON_AddNumberToObject(
+			object,
+			"temperature",
+			m_main->m_sensor_manager.getAirTemperature()
+		);
+		
+		cJSON_AddNumberToObject(
+			object,
+			"humidity",
+			m_main->m_sensor_manager.getAirHumidity()
+		);
+	}
 	
-	cJSON_AddItemToObject(
-		object,
-		"humidity",
-		cJSON_CreateNumber(m_main->m_sensor_manager.getAirHumidity())
-	);
+	else
+	{
+		cJSON_AddNullToObject(object, "temperature");
+		cJSON_AddNullToObject(object, "humidity");
+	}
 	
-	cJSON_AddItemToObject(
+	cJSON_AddNumberToObject(
 		object,
 		"soil_moisture",
-		cJSON_CreateNumber(m_main->m_sensor_manager.getSoilMoisture())
+		m_main->m_sensor_manager.getSoilMoisture()
 	);
 	
-	cJSON_AddItemToObject(
+	cJSON_AddBoolToObject(
 		object,
-		"lightning_enabled",
-		cJSON_CreateBool(m_main->m_peripheral_manager.isLightningActive())
+		"lightning_active",
+		m_main->m_peripheral_manager.isLightningActive()
 	);
 	
-	// Update when humidifier added
-	cJSON_AddItemToObject(
+	cJSON_AddBoolToObject(
 		object,
-		"humidifier_enabled",
-		cJSON_CreateFalse()
+		"humidifier_active",
+		m_main->m_peripheral_manager.isHumidifierActive()
 	);
 	
-	cJSON_AddItemToObject(
+	cJSON_AddBoolToObject(
+		object,
+		"display_on",
+		m_main->m_ui_manager.isDisplayOn()
+	);
+	
+	cJSON_AddNumberToObject(
 		object,
 		"timestamp",
-		cJSON_CreateNumber(time(nullptr))
+		time(nullptr)
 	);
 	
 	char buffer[1024] = "";
@@ -224,6 +225,40 @@ void Webserver::apiGetMeasurementsHandler(httpd_req_t* request)
 	httpd_resp_set_type(request, "application/json");
 	httpd_resp_sendstr(request, buffer);
 	cJSON_Delete(object);
+}
+
+void Webserver::apiSetDisplayOnHandler(httpd_req_t* request)
+{
+	char query[128] = "";
+	if (esp_err_t err; (err = httpd_req_get_url_query_str(request, query, sizeof(query))) != ESP_OK)
+	{
+		ESP_LOGE(TAG, "unable to get query string: %s", esp_err_to_name(err));
+		
+		httpd_resp_set_status(request, "400");
+		httpd_resp_sendstr(request, "invalid query");
+		return;
+	}
+	
+	char value[8] = "";
+	if (esp_err_t err; (err = httpd_query_key_value(query, "on", value, sizeof(value))) != ESP_OK)
+	{
+		ESP_LOGE(TAG, "unable to get query value: %s", esp_err_to_name(err));
+		
+		httpd_resp_set_status(request, "400");
+		httpd_resp_sendstr(request, "invalid query value");
+		return;
+	}
+
+	bool on = (strcmp(value, "1") == 0);
+	m_main->m_ui_manager.setDisplayOn(on);
+	
+	httpd_resp_set_type(request, "text/plain");
+	httpd_resp_sendstr(
+		request,
+		on
+			? "set display on"
+			: "set display off"
+	);
 }
 
 //========================================

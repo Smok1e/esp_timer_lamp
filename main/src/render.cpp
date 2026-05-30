@@ -29,10 +29,10 @@ void Rectangle(
 			display.setPixel(position.x + x,      position.y,          value);
 		
 		for (int x = 0; x < size.x; x++)
-			display.setPixel(position.x + x,      position.y + size.y, value);
+			display.setPixel(position.x + x + 1,  position.y + size.y, value);
 		
 		for (int y = 0; y < size.y; y++)
-			display.setPixel(position.x,          position.y + y,      value);
+			display.setPixel(position.x,          position.y + y + 1,  value);
 		
 		for (int y = 0; y < size.y; y++)
 			display.setPixel(position.x + size.x, position.y + y,      value);

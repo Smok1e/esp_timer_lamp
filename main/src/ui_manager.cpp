@@ -2,6 +2,8 @@
 #include <utils.hpp>
 #include <main.hpp>
 
+#include <algorithm>
+
 //======================================== Constants
 
 constexpr const char* TAG = "ui";
@@ -32,6 +34,75 @@ const Icon ICON_HUMIDITY    { ICON_HUMIDITY_BEGIN,    ICON_HUMIDITY_END    };
 const Icon ICON_SOIL        { ICON_SOIL_BEGIN,        ICON_SOIL_END        };
 const Icon ICON_DEGREE      { ICON_DEGREE_BEGIN,      ICON_DEGREE_END      };
 
+//========================================
+
+extern const uint8_t ICON_PLANT_0_BEGIN [] asm("_binary_plant_0_bin_start"    );
+extern const uint8_t ICON_PLANT_0_END   [] asm("_binary_plant_0_bin_end"      );
+
+extern const uint8_t ICON_PLANT_1_BEGIN [] asm("_binary_plant_1_bin_start"    );
+extern const uint8_t ICON_PLANT_1_END   [] asm("_binary_plant_1_bin_end"      );
+
+extern const uint8_t ICON_PLANT_2_BEGIN [] asm("_binary_plant_2_bin_start"    );
+extern const uint8_t ICON_PLANT_2_END   [] asm("_binary_plant_2_bin_end"      );
+
+extern const uint8_t ICON_PLANT_3_BEGIN [] asm("_binary_plant_3_bin_start"    );
+extern const uint8_t ICON_PLANT_3_END   [] asm("_binary_plant_3_bin_end"      );
+
+extern const uint8_t ICON_PLANT_4_BEGIN [] asm("_binary_plant_4_bin_start"    );
+extern const uint8_t ICON_PLANT_4_END   [] asm("_binary_plant_4_bin_end"      );
+
+extern const uint8_t ICON_PLANT_5_BEGIN [] asm("_binary_plant_5_bin_start"    );
+extern const uint8_t ICON_PLANT_5_END   [] asm("_binary_plant_5_bin_end"      );
+
+extern const uint8_t ICON_PLANT_6_BEGIN [] asm("_binary_plant_6_bin_start"    );
+extern const uint8_t ICON_PLANT_6_END   [] asm("_binary_plant_6_bin_end"      );
+
+extern const uint8_t ICON_PLANT_7_BEGIN [] asm("_binary_plant_7_bin_start"    );
+extern const uint8_t ICON_PLANT_7_END   [] asm("_binary_plant_7_bin_end"      );
+
+extern const uint8_t ICON_PLANT_8_BEGIN [] asm("_binary_plant_8_bin_start"    );
+extern const uint8_t ICON_PLANT_8_END   [] asm("_binary_plant_8_bin_end"      );
+
+extern const uint8_t ICON_PLANT_9_BEGIN [] asm("_binary_plant_9_bin_start"    );
+extern const uint8_t ICON_PLANT_9_END   [] asm("_binary_plant_9_bin_end"      );
+
+extern const uint8_t ICON_PLANT_10_BEGIN[] asm("_binary_plant_10_bin_start"    );
+extern const uint8_t ICON_PLANT_10_END  [] asm("_binary_plant_10_bin_end"      );
+
+extern const uint8_t ICON_PLANT_11_BEGIN[] asm("_binary_plant_11_bin_start"    );
+extern const uint8_t ICON_PLANT_11_END  [] asm("_binary_plant_11_bin_end"      );
+
+extern const uint8_t ICON_PLANT_12_BEGIN[] asm("_binary_plant_12_bin_start"    );
+extern const uint8_t ICON_PLANT_12_END  [] asm("_binary_plant_12_bin_end"      );
+
+extern const uint8_t ICON_PLANT_13_BEGIN[] asm("_binary_plant_13_bin_start"    );
+extern const uint8_t ICON_PLANT_13_END  [] asm("_binary_plant_13_bin_end"      );
+
+extern const uint8_t ICON_PLANT_14_BEGIN[] asm("_binary_plant_14_bin_start"    );
+extern const uint8_t ICON_PLANT_14_END  [] asm("_binary_plant_14_bin_end"      );
+
+extern const uint8_t ICON_PLANT_15_BEGIN[] asm("_binary_plant_15_bin_start"    );
+extern const uint8_t ICON_PLANT_15_END  [] asm("_binary_plant_15_bin_end"      );
+
+const Icon ICON_PLANT[] = {
+	{ ICON_PLANT_0_BEGIN,  ICON_PLANT_0_BEGIN  },
+	{ ICON_PLANT_1_BEGIN,  ICON_PLANT_1_BEGIN  },
+	{ ICON_PLANT_2_BEGIN,  ICON_PLANT_2_BEGIN  },
+	{ ICON_PLANT_3_BEGIN,  ICON_PLANT_3_BEGIN  },
+	{ ICON_PLANT_4_BEGIN,  ICON_PLANT_4_BEGIN  },
+	{ ICON_PLANT_5_BEGIN,  ICON_PLANT_5_BEGIN  },
+	{ ICON_PLANT_6_BEGIN,  ICON_PLANT_6_BEGIN  },
+	{ ICON_PLANT_7_BEGIN,  ICON_PLANT_7_BEGIN  },
+	{ ICON_PLANT_8_BEGIN,  ICON_PLANT_8_BEGIN  },
+	{ ICON_PLANT_9_BEGIN,  ICON_PLANT_9_BEGIN  },
+	{ ICON_PLANT_10_BEGIN, ICON_PLANT_10_BEGIN },
+	{ ICON_PLANT_11_BEGIN, ICON_PLANT_11_BEGIN },
+	{ ICON_PLANT_12_BEGIN, ICON_PLANT_12_BEGIN },
+	{ ICON_PLANT_13_BEGIN, ICON_PLANT_13_BEGIN },
+	{ ICON_PLANT_14_BEGIN, ICON_PLANT_14_BEGIN },
+	{ ICON_PLANT_15_BEGIN, ICON_PLANT_15_BEGIN }
+};
+
 //======================================== Lifecycle
 
 void UIManager::init(Main* main)
@@ -58,7 +129,7 @@ void UIManager::init(Main* main)
 		SPI2_HOST,
 		DISPLAY_PIN_DC,
 		DISPLAY_PIN_RESET,
-		1'000'000 * CONFIG_DISPLAY_SPI_FREQ_MHZ
+		1000
 	);
 	
 	ESP_LOGI(TAG, "display initialized");
@@ -103,6 +174,22 @@ void UIManager::setFirmwareUpdateProgress(uint8_t progress)
 	m_firmware_update_progress = progress;
 }
 
+bool UIManager::isDisplayOn() const
+{
+	return m_display.isDisplayOn();
+}
+
+void UIManager::setDisplayOn(bool on)
+{
+	if (m_display.isDisplayOn() == on)
+		return;
+	
+	std::lock_guard<std::mutex> lock(m_display_mutex);
+	
+	ESP_LOGI(TAG, "set display %s", on? "on": "off");
+	m_display.setDisplayOn(on);
+}
+
 //======================================== Task loop
 
 void UIManager::task()
@@ -111,25 +198,29 @@ void UIManager::task()
 	
 	while (m_task_running)
 	{
-		m_display.clear();
-		
-		switch (m_state)
+		if (m_display.isDisplayOn())
 		{
-			case State::Initialization:
-				onRenderInitialization();
-				break;
-				
-			case State::Running:
-				onRenderRunning();
-				break;
-				
-			case State::FirmwareUpdate:
-				onRenderFirmwareUpdate();
-				break;
-				
+			std::lock_guard<std::mutex> lock(m_display_mutex);
+			m_display.clear();
+			
+			switch (m_state)
+			{
+				case State::Initialization:
+					onRenderInitialization();
+					break;
+					
+				case State::Running:
+					onRenderRunning();
+					break;
+					
+				case State::FirmwareUpdate:
+					onRenderFirmwareUpdate();
+					break;
+					
+			}
+			
+			m_display.flush();
 		}
-		
-		m_display.flush();
 		
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
@@ -140,38 +231,112 @@ void UIManager::task()
 	vTaskDelete(nullptr);
 }
 
-//======================================== Initialization stage rendering
+//======================================== Progress bar
 
-void UIManager::onRenderInitialization()
+void UIManager::drawProgress(std::string_view text, uint8_t progress)
 {
+	constexpr size_t gap = 4;
+	
 	Vector2u display_size = m_display.getSize();
-	for (unsigned x = 0; x < display_size.x; x++)
-		for (unsigned y = 0; y < display_size.y; y++)
-			if ((y + x) % 10 == 0) m_display.setPixel(x, y, true);
+	
+	Vector2i text_size = FONT.getTextSize(text);
+	Vector2u progress_bar_size(
+		display_size.x - 16,
+		7
+	);
+	
+	size_t progress_bar_fill_width = progress_bar_size.x / 3;
+	size_t progress_bar_fill_space = progress_bar_size.x * 2;
 	
 	render::Text(
 		m_display,
 		FONT,
-		Vector2i(m_display.getSize()) / 2 - FONT.getTextSize(m_initialization_stage) / 2,
-		m_initialization_stage,
+		Vector2i(
+			(display_size.x - text_size.x) / 2,
+			(display_size.y - text_size.y - gap - progress_bar_size.y) / 2
+		),
+		text,
 		true,
 		true
 	);
+	
+	Vector2i progress_bar_pos(
+		(display_size.x - progress_bar_size.x) / 2,
+		(display_size.y + text_size.y) / 2 + gap
+	);
+	
+	render::RoundedRectangle(
+		m_display,
+		progress_bar_pos,
+		progress_bar_size,
+		1,
+		false,
+		render::RoundedRectangleStyle::Default | render::RoundedRectangleStyle::Outline
+	);
+	
+	m_display.setScissor(
+		progress_bar_pos.x + 1,
+		progress_bar_pos.y + 1,
+		progress_bar_size.x - 2,
+		progress_bar_size.y - 2
+	);
+	
+	if (progress)
+	{
+		render::Rectangle(
+			m_display,
+			progress_bar_pos,
+			Vector2i(progress * progress_bar_size.x / 100, progress_bar_size.y)
+		);
+	}
+	
+	else
+	{
+		auto milliseconds = pdTICKS_TO_MS(xTaskGetTickCount());
+		
+		Vector2i progress_bar_fill_pos(
+			progress_bar_pos.x + (
+				(progress_bar_size.x * milliseconds / 750) % progress_bar_fill_space
+			) - progress_bar_fill_space / 2,
+			progress_bar_pos.y
+		);
+		
+		render::Rectangle(
+			m_display,
+			progress_bar_fill_pos,
+			Vector2i(
+				progress_bar_fill_width,
+				progress_bar_size.y
+			)
+		);
+	}
+	
+	m_display.setScissor();
 }
 
-//======================================== Runtime rendering
+//======================================== Rendering
+
+void UIManager::onRenderInitialization()
+{
+	drawProgress(m_initialization_stage);
+}
 
 void UIManager::onRenderRunning()
 {
+	constexpr size_t gap = 3;
+	
 	Vector2u display_size = m_display.getSize();
 	
-	auto text = render::FormatTmp("%5.2f", m_main->m_sensor_manager.getAirTemperature());
+	auto text = m_main->m_sensor_manager.isAirSensorAvailable()
+		? render::FormatTmp("%5.2f", m_main->m_sensor_manager.getAirTemperature())
+		: "N/A    ";
+	
 	Vector2u text_size(
-		ICON_TEMPERATURE.getSize().x + FONT.getTextSize(text).x + ICON_DEGREE.getSize().x,
-		FONT.getGlyphSize().y * 3
+		ICON_TEMPERATURE.getSize().x + (text.length() + 1) * FONT.getGlyphSize().x,
+		(FONT.getGlyphSize().y + gap) * 3
 	);
 	
-	Vector2u text_pos = Vector2u(0, display_size.y / 2 - text_size.y / 2);
+	Vector2i text_pos(0, display_size.y / 2 - text_size.y / 2);
 	
 	uint8_t y = 0;
 	
@@ -185,17 +350,18 @@ void UIManager::onRenderRunning()
 	render::Text(
 		m_display,
 		FONT,
-		text_pos + Vector2i(ICON_TEMPERATURE.getSize().x + 4, y),
+		text_pos + Vector2i(ICON_TEMPERATURE.getSize().x + gap, y),
 		text
 	);
 	
-	render::Icon(
-		m_display,
-		ICON_DEGREE,
-		text_pos + Vector2i(ICON_TEMPERATURE.getSize().x + 4 + FONT.getTextSize(text).x , y)
-	);
+	if (m_main->m_sensor_manager.isAirSensorAvailable())
+		render::Icon(
+			m_display,
+			ICON_DEGREE,
+			text_pos + Vector2i(ICON_TEMPERATURE.getSize().x + gap + FONT.getTextSize(text).x , y)
+		);
 	
-	y += FONT.getGlyphSize().y + 1;
+	y += FONT.getGlyphSize().y + gap;
 	
 	// Humidity
 	render::Icon(
@@ -207,11 +373,13 @@ void UIManager::onRenderRunning()
 	render::Text(
 		m_display,
 		FONT,
-		text_pos + Vector2i(ICON_HUMIDITY.getSize().x + 4, y),
-		render::FormatTmp("%5.2f%%", m_main->m_sensor_manager.getAirHumidity())
+		text_pos + Vector2i(ICON_HUMIDITY.getSize().x + gap, y),
+		m_main->m_sensor_manager.isAirSensorAvailable()
+			? render::FormatTmp("%5.2f%%", m_main->m_sensor_manager.getAirHumidity())
+			: "N/A"
 	);
 	
-	y += FONT.getGlyphSize().y + 1;
+	y += FONT.getGlyphSize().y + gap;
 	
 	// Soil moisture
 	render::Icon(
@@ -223,121 +391,31 @@ void UIManager::onRenderRunning()
 	render::Text(
 		m_display,
 		FONT,
-		text_pos + Vector2i(ICON_SOIL.getSize().x + 4, y),
+		text_pos + Vector2i(ICON_SOIL.getSize().x + gap, y),
 		render::FormatTmp("%5.2fV", m_main->m_sensor_manager.getSoilMoisture())
 	);
 	
-	Vector2u cube_offset(text_size.x + (display_size.x - text_size.x) / 2, display_size.y / 2);
-	constexpr float cube_max_size = 30;
-	
-	auto time = static_cast<float>(pdTICKS_TO_MS(xTaskGetTickCount())) / 1000.f;
-	auto t = ((sin(time) + 1.f) / 4.f) + .5f;
-	auto cube_size = cube_max_size * t;
-	
-	Vector2f angles(
-		.5f * std::numbers::pi * time,
-		.3f * std::numbers::pi * time
+	constexpr auto frame_count = std::size(ICON_PLANT);
+	auto index = std::min<size_t>(
+		frame_count - 1,
+		(pdTICKS_TO_MS(xTaskGetTickCount()) / 150) % (frame_count + 10)
 	);
 	
-	float sin_phi_x = sin(angles.x);
-	float cos_phi_x = cos(angles.x);
+	const auto& frame = ICON_PLANT[index];
 	
-	float sin_phi_y = sin(angles.y);
-	float cos_phi_y = cos(angles.y);
-	
-	auto transform = [
-		&cube_offset,
-		&sin_phi_x,
-		&cos_phi_x,
-		&sin_phi_y,
-		&cos_phi_y
-	](const Vector3f& point) -> Vector2f
-	{
-		auto rotated = RotateAroundY(
-			RotateAroundX(
-				point,
-				sin_phi_x,
-				cos_phi_x
-			),
-			sin_phi_y,
-			cos_phi_y
-		);
-		
-		return cube_offset + Vector2f(rotated.x, rotated.y);
-	};
-	
-	//     E-----------F
-	//    /|          /|
-	//   / |         / |
-	//  A-----------B  |
-	//  |  |        |  |
-	//  |  G--------|--H
-	//  | /         | /
-	//  |/          |/
-	//  C-----------D
-
-	auto A = transform(Vector3f(-cube_size / 2, -cube_size / 2, -cube_size / 2));
-	auto B = transform(Vector3f( cube_size / 2, -cube_size / 2, -cube_size / 2));
-	auto C = transform(Vector3f(-cube_size / 2,  cube_size / 2, -cube_size / 2));
-	auto D = transform(Vector3f( cube_size / 2,  cube_size / 2, -cube_size / 2));
-	auto E = transform(Vector3f(-cube_size / 2, -cube_size / 2,  cube_size / 2));
-	auto F = transform(Vector3f( cube_size / 2, -cube_size / 2,  cube_size / 2));
-	auto G = transform(Vector3f(-cube_size / 2,  cube_size / 2,  cube_size / 2));
-	auto H = transform(Vector3f( cube_size / 2,  cube_size / 2,  cube_size / 2));
-
-	render::Line(m_display, A, B);
-	render::Line(m_display, B, D);
-	render::Line(m_display, D, C);
-	render::Line(m_display, C, A);
-	
-	render::Line(m_display, E, F);
-	render::Line(m_display, F, H);
-	render::Line(m_display, H, G);
-	render::Line(m_display, G, E);
-	
-	render::Line(m_display, A, E);
-	render::Line(m_display, B, F);
-	render::Line(m_display, C, G);
-	render::Line(m_display, D, H);
+	render::Icon(
+		m_display,
+		frame,
+		Vector2i(
+			text_size.x + (display_size.x - text_size.x - frame.getSize().x) / 2,
+			(display_size.y - frame.getSize().y) / 2
+		)
+	);
 }
-
-//======================================== Firmware update rendering
 
 void UIManager::onRenderFirmwareUpdate()
 {
-	Vector2u display_size = m_display.getSize();
-	Vector2u progress_bar_size(
-		display_size.x - 16,
-		16
-	);
-	
-	std::string_view text = "firmware update";
-	render::Text(
-		m_display,
-		FONT,
-		Vector2i(display_size.x / 2 - FONT.getTextSize(text).x / 2, 0),
-		text
-	);
-	
-	auto progress_bar_position = display_size / 2 - progress_bar_size / 2;
-	render::Rectangle(
-		m_display,
-		progress_bar_position,
-		progress_bar_size,
-		true,
-		false
-	);
-	
-	Vector2u progress_bar_current_size(
-		progress_bar_size.x * m_firmware_update_progress / 100,
-		progress_bar_size.y
-	);
-	
-	render::Rectangle(
-		m_display,
-		progress_bar_position,
-		progress_bar_current_size
-	);
+	drawProgress("Updating", m_firmware_update_progress);
 }
 
 //========================================

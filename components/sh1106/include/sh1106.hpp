@@ -34,11 +34,17 @@ public:
 	
 	bool setPixel(int x, int y, bool value);
 	
+	void setDisplayOn(bool on);
+	bool isDisplayOn() const;
+	
 	void setContrast(uint8_t contrast);
 	uint8_t getContrast() const;
 	
 	void setInverted(bool value);
 	bool isInverted() const;
+	
+	void setScissor(int x, int y, int width, int height);
+	void setScissor();
 	
 	void clear(bool value = false);
 	
@@ -73,6 +79,9 @@ private:
 		NOP                                    = 0b11100011  // No operaton
 	};
 	
+	void sendCommand(uint8_t cmd);
+	void setColumnAddress(uint8_t column);
+	
 	static uint16_t s_max_width;
 	static uint16_t s_max_height;
 	static size_t   s_buffer_size;
@@ -83,13 +92,16 @@ private:
 	uint16_t            m_width         = 0;
 	uint16_t            m_height        = 0;
 	
+	int m_scissor_src_x = 0;
+	int m_scissor_src_y = 0;
+	int m_scissor_dst_x = 0;
+	int m_scissor_dst_y = 0;
+	
 	uint8_t* m_pixel_data = nullptr;
 	
+	bool    m_on = true;
 	bool    m_inverted = false;
 	uint8_t m_contrast = 0x3F;
-	
-	void sendCommand(uint8_t cmd);
-	void setColumnAddress(uint8_t column);
 	
 };
 

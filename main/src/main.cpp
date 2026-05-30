@@ -165,30 +165,20 @@ void Main::initSNTP()
 	}
 }
 
-//======================================== Web interface
-
-void Main::initWebserver()
-{
-	m_ui_manager.setInitializationStage("Webserver");
-	m_webserver.init(this);
-	ESP_LOGI(TAG, "webserver initialized");
-}
-
-//========================================
-
 void Main::run()
 {
 	m_ui_manager.init(this);
 	m_ui_manager.start();
 	m_ui_manager.setState(UIManager::State::Initialization);
 	
+	m_peripheral_manager.init(this);
+	
 	initNVS();
 	initWifi();
 	initSNTP();
-	initWebserver();
 	
+	m_webserver.init(this);
 	m_sensor_manager.init(this);
-	m_peripheral_manager.init(this);
 	
 	m_sensor_manager.start();
 	m_peripheral_manager.start();

@@ -1,6 +1,9 @@
 #include <sensor_manager.hpp>
+#include <main.hpp>
 
 #include <esp_log.h>
+
+#include <cmath>
 
 //======================================== Constants
 
@@ -19,7 +22,8 @@ constexpr auto MEASUREMENT_INTERVAL = pdMS_TO_TICKS(1000 * CONFIG_SENSOR_MEASURE
 void SensorManager::init(Main* main)
 {
 	m_main = main;
-
+	m_main->m_ui_manager.setInitializationStage("Sensors");
+	
 	m_task_semaphore_handle = xSemaphoreCreateBinaryStatic(&m_task_semaphore_buffer);
 	
 	// SHT20 I2C air temperature/humidity sensor

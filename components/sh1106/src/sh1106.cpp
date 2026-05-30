@@ -28,10 +28,12 @@ void SH1106::init(
 	uint16_t height /*= 64 */
 )
 {
-	m_pin_dc = pin_dc;
+	m_pin_dc    = pin_dc;
 	m_pin_reset = pin_reset;
-	m_width = width;
-	m_height = height;
+	m_width     = width;
+	m_height    = height;
+	
+	setScissor();
 	
 	m_pixel_data = reinterpret_cast<uint8_t*>(heap_caps_malloc(s_buffer_size, MALLOC_CAP_DMA));
 	
@@ -90,7 +92,7 @@ std::pair<uint16_t, uint16_t> SH1106::getSize() const
 
 bool SH1106::setPixel(int x, int y, bool value)
 {
-	if (!(0 <= x && x < m_width && 0 <= y && y < m_height))
+	if (!(m_scissor_src_x <= x && x < m_scissor_dst_x && m_scissor_src_y <= y && y < m_scissor_dst_y))
 		return false;
 	
 	auto pixel = (y + (s_max_height - m_height) / 2) * s_max_width + (x + (s_max_width - m_width) / 2);
@@ -100,6 +102,17 @@ bool SH1106::setPixel(int x, int y, bool value)
 	
 	(m_pixel_data[byte] &= ~(1 << bit)) |= (value << bit);
 	return true;
+}
+
+void SH1106::setDisplayOn(bool on)
+{
+	m_on = on;
+	sendCommand(Command::SetDisplayOn | on);
+}
+
+bool SH1106::isDisplayOn() const
+{
+	return m_on;
 }
 
 void SH1106::setContrast(uint8_t contrast)
@@ -121,6 +134,22 @@ void SH1106::setInverted(bool value)
 bool SH1106::isInverted() const
 {
 	return m_inverted;
+}
+
+void SH1106::setScissor(int x, int y, int width, int height)
+{
+	m_scissor_src_x = x;
+	m_scissor_src_y = y;
+	m_scissor_dst_x = x + width;
+	m_scissor_dst_y = y + height;
+}
+
+void SH1106::setScissor()
+{
+	m_scissor_src_x = 0;
+	m_scissor_src_y = 0;
+	m_scissor_dst_x = m_width;
+	m_scissor_dst_y = m_height;
 }
 
 void SH1106::clear(bool value /*= false*/)

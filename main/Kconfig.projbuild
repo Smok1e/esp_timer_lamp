@@ -31,24 +31,44 @@ menu "Timer lamp"
 
     endmenu
 
-    menu "Relay"
-        config GPIO_PIN_RELAY
-            int "Relay control pin"
+    menu "Peripherals"
+        config PERIPHERALS_RELAY_PIN
+            int "Relay pin"
             default 0
             help
                 Set relay control pin
 
-        config RELAY_START_TIME
-            string "Power on schedule"
+        config PERIPHERALS_DAY_START_TIME
+            string "Day start time"
             default "07:00:00"
             help
                 Relay activation schedule in HH:MM:SS format
 
-        config RELAY_STOP_TIME
-            string "Power off schedule"
-            default "21:00:00"
+        config PERIPHERALS_DAY_STOP_TIME
+            string "Day end time"
+            default "23:00:00"
             help
                 Relay deactivation schedule in HH:MM:SS format
+
+        config PERIPHERALS_HUMIDIFIER_PIN
+            int "Humidifier pin"
+            default 21
+
+        config PERIPHERALS_HUMIDIFIER_HUMIDITY_MIN_DAY
+            int "Minimum humidity during daytime"
+            default 48
+
+        config PERIPHERALS_HUMIDIFIER_HUMIDITY_MAX_DAY
+            int "Maximum humidity during daytime"
+            default 55
+
+        config PERIPHERALS_HUMIDIFIER_HUMIDITY_MIN_NIGHT
+            int "Minimum humidity during nighttime"
+            default 42
+
+        config PERIPHERALS_HUMIDIFIER_HUMIDITY_MAX_NIGHT
+            int "Maximum humidity during nighttime"
+            default 48
 
     endmenu
 

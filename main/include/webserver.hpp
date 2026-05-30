@@ -12,9 +12,9 @@ class Webserver
 {
 public:
 	Webserver() = default;
-	~Webserver();
 	
 	void init(Main* main);
+	void stop();
 	
 private:
 	Main* m_main = nullptr;
@@ -24,9 +24,9 @@ private:
 	template<auto Handler, httpd_method_t Method = HTTP_GET>
 	void registerEndpoint(const char* uri);
 	
-	void indexHandler              (httpd_req_t* request);
-	void apiUpdateFirmwareHandler  (httpd_req_t* request);
-	void apiGetMeasurementsHandler (httpd_req_t* request);
+	void apiUpdateFirmwareHandler(httpd_req_t* request);
+	void apiGetStatusHandler     (httpd_req_t* request);
+	void apiSetDisplayOnHandler  (httpd_req_t* request);
 	
 };
 

@@ -3,6 +3,8 @@
 #include <sh1106.hpp>
 #include <render.hpp>
 
+#include <mutex>
+
 //========================================
 
 class Main;
@@ -27,8 +29,13 @@ public:
 	void setInitializationStage(std::string_view stage);
 	void setFirmwareUpdateProgress(uint8_t progress);
 	
+	bool isDisplayOn() const;
+	void setDisplayOn(bool on);
+	
 private:
 	void task();
+	
+	void drawProgress(std::string_view text, uint8_t progress = 0);
 	
 	void onRenderInitialization();
 	void onRenderRunning();
@@ -37,6 +44,7 @@ private:
 	Main* m_main = nullptr;
 	
 	SH1106 m_display {};
+	std::mutex m_display_mutex {};
 	
 	State m_state = State::Initialization;
 	std::string_view m_initialization_stage = "Initialization";

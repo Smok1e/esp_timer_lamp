@@ -57,7 +57,6 @@ private:
 	void initNVS();
 	void initWifi();
 	void initSNTP();
-	void initWebserver();
 	
 	SensorManager     m_sensor_manager     = {};
 	PeripheralManager m_peripheral_manager = {};
@@ -70,7 +69,7 @@ private:
 	bool       m_running          = true;
 	
 	EventGroupHandle_t m_wifi_event_group = 0;
-	
+
 };
 
 //========================================

@@ -27,6 +27,8 @@ public:
 	template<Scalar U>
 	Vector2(const std::pair<U, U>& pair);
 	
+	operator std::pair<T, T>();
+	
 	T lengthSqr() const;
 	float length() const;
 	
@@ -94,6 +96,14 @@ Vector2<T>::Vector2(const std::pair<U, U>& pair):
 	x(static_cast<T>(pair.first )),
 	y(static_cast<T>(pair.second))
 {}
+
+//======================================== Conversion operators
+
+template<Scalar T>
+Vector2<T>::operator std::pair<T, T>()
+{
+	return {x, y};
+}
 
 //======================================== Linear operations
 
