@@ -24,9 +24,10 @@ private:
 	template<auto Handler, httpd_method_t Method = HTTP_GET>
 	void registerEndpoint(const char* uri);
 	
-	void apiUpdateFirmwareHandler(httpd_req_t* request);
-	void apiGetStatusHandler     (httpd_req_t* request);
-	void apiSetDisplayOnHandler  (httpd_req_t* request);
+	void apiUpdateFirmwareHandler  (httpd_req_t* request);
+	void apiGetStatusHandler       (httpd_req_t* request);
+	void apiSetDisplayOnHandler    (httpd_req_t* request);
+	void apiSetLightningModeHandler(httpd_req_t* request);
 	
 };
 

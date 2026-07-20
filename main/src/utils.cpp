@@ -32,32 +32,3 @@ unsigned ParseSecondsSinceMidnight(const char* str)
 }
 
 //========================================
-
-Vector3f RotateAroundX(const Vector3f& point, float sin_phi, float cos_phi)
-{
-	return Vector3f(
-		point.x,
-		point.y * cos_phi - point.z * sin_phi,
-		point.y * sin_phi + point.z * cos_phi
-	);
-}
-
-Vector3f RotateAroundY(const Vector3f& point, float sin_phi, float cos_phi)
-{
-	return Vector3f(
-		point.x * cos_phi + point.z * sin_phi,
-		point.y,
-		-point.x * sin_phi + point.z * cos_phi
-	);
-}
-
-Vector3f RotateAroundZ(const Vector3f& point, float sin_phi, float cos_phi)
-{
-	return Vector3f(
-		point.x * cos_phi - point.y * sin_phi,
-		point.x * sin_phi + point.y * cos_phi,
-		point.z
-	);
-}
-
-//========================================

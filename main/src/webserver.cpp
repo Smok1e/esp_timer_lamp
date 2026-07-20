@@ -21,9 +21,10 @@ void Webserver::init(Main* main)
 	ESP_ERROR_CHECK(httpd_start(&m_httpd_handle, &config));
 	ESP_LOGI(TAG, "webserver started on port %d", CONFIG_WEBSERVER_PORT);
 	
-	registerEndpoint<&Webserver::apiUpdateFirmwareHandler, HTTP_POST>("/api/update_firmware");
-	registerEndpoint<&Webserver::apiGetStatusHandler,      HTTP_GET> ("/api/get_status"     );
-	registerEndpoint<&Webserver::apiSetDisplayOnHandler,   HTTP_GET> ("/api/set_display_on" );
+	registerEndpoint<&Webserver::apiUpdateFirmwareHandler,   HTTP_POST>("/api/update_firmware"   );
+	registerEndpoint<&Webserver::apiGetStatusHandler,        HTTP_GET> ("/api/get_status"        );
+	registerEndpoint<&Webserver::apiSetDisplayOnHandler,     HTTP_GET> ("/api/set_display_on"    );
+	registerEndpoint<&Webserver::apiSetLightningModeHandler, HTTP_GET> ("/api/set_lightning_mode");
 }
 
 void Webserver::stop()
@@ -38,6 +39,8 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 {
 	char buffer[1024] = "";
 	int len = 0;
+	
+	httpd_resp_set_type(request, "text/plain");
 	
 	ESP_LOGI(TAG, "firmware update request received");
 	
@@ -142,8 +145,6 @@ void Webserver::apiUpdateFirmwareHandler(httpd_req_t* request)
 		return;
 	}
 	
-	httpd_resp_set_type(request, "text/plain");
-	
 	len = snprintf(
 		buffer,
 		sizeof(buffer),
@@ -194,6 +195,12 @@ void Webserver::apiGetStatusHandler(httpd_req_t* request)
 		m_main->m_peripheral_manager.isLightningActive()
 	);
 	
+	cJSON_AddStringToObject(
+		object,
+		"lightning_mode",
+		LightningModeToStr(m_main->m_peripheral_manager.getLightningMode())
+	);
+	
 	cJSON_AddBoolToObject(
 		object,
 		"humidifier_active",
@@ -229,6 +236,8 @@ void Webserver::apiGetStatusHandler(httpd_req_t* request)
 
 void Webserver::apiSetDisplayOnHandler(httpd_req_t* request)
 {
+	httpd_resp_set_type(request, "text/plain");
+	
 	char query[128] = "";
 	if (esp_err_t err; (err = httpd_req_get_url_query_str(request, query, sizeof(query))) != ESP_OK)
 	{
@@ -252,12 +261,52 @@ void Webserver::apiSetDisplayOnHandler(httpd_req_t* request)
 	bool on = (strcmp(value, "1") == 0);
 	m_main->m_ui_manager.setDisplayOn(on);
 	
-	httpd_resp_set_type(request, "text/plain");
 	httpd_resp_sendstr(
 		request,
 		on
 			? "set display on"
 			: "set display off"
+	);
+}
+
+void Webserver::apiSetLightningModeHandler(httpd_req_t* request)
+{
+	httpd_resp_set_type(request, "text/plain");
+	
+	char query[128] = "";
+	if (esp_err_t err; (err = httpd_req_get_url_query_str(request, query, sizeof(query))) != ESP_OK)
+	{
+		ESP_LOGE(TAG, "unable to get query string: %s", esp_err_to_name(err));
+		
+		httpd_resp_set_status(request, "400");
+		httpd_resp_sendstr(request, "invalid query");
+		return;
+	}
+	
+	char value[8] = "";
+	if (esp_err_t err; (err = httpd_query_key_value(query, "mode", value, sizeof(value))) != ESP_OK)
+	{
+		ESP_LOGE(TAG, "unable to get query value: %s", esp_err_to_name(err));
+		
+		httpd_resp_set_status(request, "400");
+		httpd_resp_sendstr(request, "invalid query value");
+		return;
+	}
+
+	auto mode = StrToLightningMode(value);
+	if (!mode)
+	{
+		ESP_LOGE(TAG, "invalid lightning mode string: %s", value);
+		
+		httpd_resp_set_status(request, "400");
+		httpd_resp_sendstr(request, "invalid mode string");
+	}
+	
+	m_main->m_peripheral_manager.setLightningMode(mode.value());
+	
+	httpd_resp_sendstr(
+		request,
+		"lightning mode updated"
 	);
 }
 

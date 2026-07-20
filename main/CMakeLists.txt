@@ -2,6 +2,7 @@ idf_component_register(
 	SRCS
 		"src/main.cpp"
 		"src/sensor_manager.cpp"
+		"src/lightning_mode.cpp"
 		"src/peripheral_manager.cpp"
 		"src/ui_manager.cpp"
 		"src/utils.cpp"

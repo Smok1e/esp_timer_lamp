@@ -95,6 +95,20 @@ void PeripheralManager::setHumidifierActive(bool active)
 	m_humidifier_active = active;
 }
 
+void PeripheralManager::setLightningMode(LightningMode mode)
+{
+	if (mode == m_lightning_mode)
+		return;
+	
+	ESP_LOGI(
+		TAG,
+		"set lightning mode to %s",
+		LightningModeToStr(mode)
+	);
+	
+	m_lightning_mode = mode;
+}
+
 bool PeripheralManager::isDaytime() const
 {
 	return m_day_time;
@@ -110,6 +124,11 @@ bool PeripheralManager::isHumidifierActive() const
 	return m_humidifier_active;
 }
 
+LightningMode PeripheralManager::getLightningMode() const
+{
+	return m_lightning_mode;
+}
+
 //======================================== Task loop
 
 void PeripheralManager::task()
@@ -122,8 +141,23 @@ void PeripheralManager::task()
 		m_day_time = m_day_start_time <= seconds && seconds < m_day_end_time;
 		
 		// Lightning
-		if (m_lightning_active != m_day_time)
-			setLightningActive(m_day_time);
+		switch (m_lightning_mode)
+		{
+			case LightningMode::Auto:
+				if (m_lightning_active != m_day_time)
+					setLightningActive(m_day_time);
+				
+				break;
+				
+			case LightningMode::On:
+				setLightningActive(true);
+				break;
+				
+			case LightningMode::Off:
+				setLightningActive(false);
+				break;
+				
+		}
 		
 		// Humidifier
 		if (m_main->m_sensor_manager.isAirSensorAvailable())
